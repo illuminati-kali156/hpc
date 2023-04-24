@@ -1,0 +1,54 @@
+#include <stdio.h>
+
+__global__ void cube(int *input, int *output, int n) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid < n) {
+        int num = input[tid];
+        output[tid] = num * num * num;
+    }
+}
+
+int main() {
+    int n = 10000;
+    int *input, *output;
+    int *d_input, *d_output;
+    
+    // Allocate memory for input and output arrays
+    input = (int*)malloc(n*sizeof(int));
+    output = (int*)malloc(n*sizeof(int));
+    
+    // Initialize input array with values from 1 to n
+    for (int i = 0; i < n; i++) {
+        input[i] = i+1;
+    }
+    
+    // Allocate memory for input and output arrays on GPU
+    cudaMalloc(&d_input, n*sizeof(int));
+    cudaMalloc(&d_output, n*sizeof(int));
+    
+    // Copy input array from host to device
+    cudaMemcpy(d_input, input, n*sizeof(int), cudaMemcpyHostToDevice);
+    
+    // Launch kernel with multiple threads
+    int block_size = 256;
+    int grid_size = (n + block_size - 1) / block_size;
+    cube<<<grid_size, block_size>>>(d_input, d_output, n);
+    
+    // Copy output array from device to host
+    cudaMemcpy(output, d_output, n*sizeof(int), cudaMemcpyDeviceToHost);
+    
+    // Print output array
+    for (int i = 0; i < n; i++) {
+        printf("%d^3 = %d\n", input[i], output[i]);
+    }
+    
+    // Free memory on host and device
+    free(input);
+    free(output);
+    cudaFree(d_input);
+    cudaFree(d_output);
+    
+    return 0;
+}
+nvcc cube_cuda.cu -o cube_cuda
+./cube_cuda
