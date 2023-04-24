@@ -1,0 +1,37 @@
+#include <stdio.h>
+#include <omp.h>
+#include <math.h>
+
+#define PI 3.14159
+
+int main() {
+    double radius = 5.0;
+    double area = 0.0;
+    int num_threads = 4; // set the number of threads to use
+    
+    #pragma omp parallel num_threads(num_threads)
+    {
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        double thread_area = 0.0;
+        
+        for (int i = thread_id; i < 10000000; i += num_threads) {
+            double x = (double)i / 10000000.0;
+            double y = sqrt(radius*radius - x*x);
+            thread_area += (y / 10000000.0) * 2.0 * radius;
+        }
+        
+        #pragma omp critical
+        {
+            area += thread_area;
+        }
+    }
+    
+    area *= PI;
+    
+    printf("Area of circle with radius %lf = %lf\n", radius, area);
+    
+    return 0;
+}
+//gcc -fopenmp file.c -o file -lm
+//./file
