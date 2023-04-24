@@ -11,3 +11,5 @@ printf("hello world i am process no %d of %d.\n", &rank, &size);
 MPI_Finalize();
 return 0;
 }
+// mpicc -o hello_world_mpi hello_world_mpi.c
+// mpirum -np 4 hello_world_mpi
